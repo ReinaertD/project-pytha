@@ -1,79 +1,43 @@
 <?php
 // Required headers
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: localhost");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
- 
-include_once "../config/Database.php";
-include_once "../objects/GamePlanet.php";
 
-// Establish database connection
+include_once '../config/Database.php';
+include_once '../objects/Product.php';
+
 $database = new Database();
 $db = $database->getConnection();
 
-// Instantiate GamePlanet
-$gamePlanet = new GamePlanet($db);
+$product = new Product($db);
 
-// Get POSTED data
 $data = json_decode(file_get_contents("php://input"));
 
-// Check if data is empty
-if(
-    !empty($data->name)&&
-    !empty($data->price_per_unit)&&
-    !empty($data->developer)&&
-    !empty($data->publisher)&&
-    !empty($data->platform)&&
-    !empty($data->pegi)&&
-    !empty($data->ean)&&
-    !empty($data->stock)&&
-    !empty($data->description)
-){
-    $gamePlanet->name = $data->name;
-    $gamePlanet->price_per_unit = $data->price_per_unit;
-    $gamePlanet->developer = $data->developer;
-    $gamePlanet->publisher = $data->publisher;
-    $gamePlanet->platform = $data->platform;
-    $gamePlanet->pegi = $data->pegi;
-    $gamePlanet->ean = $data->ean;
-    $gamePlanet->stock = $data->stock;
-    $gamePlanet->description = $data->description;
+if (
+    !empty($data->name) &&
+    !empty($data->price) &&
+    !empty($data->stock) &&
+    !empty($data->webshop)
+) {
+    $product->setName($data->name);
+    $product->setPrice($data->price);
+    $product->setStock($data->stock);
+    $product->setWebshop($data->webshop);
 
-    if($gamePlanet->create()){
-        // Response code CREATED
-      http_response_code(201);
-        // Reply message
-        echo json_encode(array("message"=>"Product was created!"));
-    }else{
-        // Response code SERVICE UNAVAILABLE
+    if ($product->create()) {
+        http_response_code(201);
+        echo json_encode(array("message" => "product created"));
+    } else {
         http_response_code(503);
-        // Reply message
-        echo json_encode(array("message"=>"Unable to create product."));
+        echo json_encode(array("message" => "failed to create"));
     }
 }
-
-else{
-    // Response code BAD REQUEST
+else {
     http_response_code(400);
-    // Reply message
-    echo json_encode(array("message"=>"Unable to create product. Data is incomplete!"));
+    // incomplete data
+    echo json_encode(array("message" => file_get_contents("php://input")));
+
 }
-
-
-// API BODY RAW INPUT
-// {
-//     "name" : "Jasper's Crazy Adventures",
-//     "price_per_unit" : "59",
-//     "publisher" : "Dysfunctional Analyzers!",
-//     "developer" : "Hobo's In Space!",
-//     "platform" : "PC",
-//     "pegi" : "18",
-//     "ean" : "0000000000000",
-//     "stock" : "5",
-//     "description" : "Go on a crazy adventure with Jasper the Jack of All Spades! Beat the crazy Klingon Adel, and his superiors, Captain Nijst, Confuzing Janzo, and Supreme Leader Reinaert!"
-// }
-
-
-?>

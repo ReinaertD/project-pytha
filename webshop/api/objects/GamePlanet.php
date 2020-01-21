@@ -4,24 +4,26 @@ include_once '../config/Database.php';
 
 class GamePlanet
 {
+    private const TABLENAME ="GamePlanetProducts";
     // db connection and table name
     private $connection;
-    private $table_name = "GamePlanetProducts";
     // properties
-    public $name;
-    public $id;
-    public $price_per_unit;
-    public $basic_unit;
-    public $tax_percentage;
-    public $developer;
-    public $publisher;
-    public $platform;
-    public $pegi;
-    public $ean;
-    public $stock;
-    public $description;
+    private $name;
+    private $id;
+    private $price_per_unit;
+    private $basic_unit;
+    private $tax_percentage;
+    private $developer;
+    private $publisher;
+    private $platform;
+    private $pegi;
+    private $ean;
+    private $stock;
+    private $description;
+
+
     //constructor with $db as connection
-    public function __construct($db)
+    private function __construct(\Pdo $db)
     {
         $this->connection = $db;
     }
@@ -33,7 +35,7 @@ class GamePlanet
         $query = "SELECT
                      p.name, p.id, p.price_per_unit, p.basic_unit, p.tax_percentage, p.developer, p.publisher, p.platform, p.pegi, p.ean, p.stock, p.description
                     FROM 
-                    " . $this->table_name . " 
+                    " . self::TABLENAME . " 
                     p ";
         // $query = "SELECT name, id,price_per_unit,tax_percentage,developer,publisher,platform,pegi,ean,stock,description";
         // prepare query statement
@@ -81,7 +83,7 @@ class GamePlanet
         $query = "SELECT
             p.name, p.id, p.price_per_unit, p.basic_unit, p.tax_percentage, p.developer, p.publisher, p.platform, p.pegi, p.ean, p.stock, p.description
                  FROM 
-                  " . $this->table_name . " p
+                 " . self::TABLENAME . " 
                           WHERE p.id=? LIMIT 0,1";
 
         // Prepare query statement
@@ -110,10 +112,11 @@ class GamePlanet
         $this->description = $row['description'];
     }
 
-    function update()
+    function update() : bool
     {
-        $query = "UPDATE " .
-            $this->table_name . "
+        $query = "UPDATE
+                             " . self::TABLENAME . " 
+
                         SET
                         name=:name,
                         price_per_unit = :price_per_unit,
@@ -156,21 +159,22 @@ class GamePlanet
         return false;
     }
 
-    function search($keywords)
+    function search(string $keywords)
     {
         // Query
-        json_encode(array("message" => $keywords));
         $query = "SELECT
         p.name, p.id, p.price_per_unit, p.basic_unit, p.tax_percentage, p.developer, p.publisher, p.platform, p.pegi, p.ean, p.stock, p.description
        FROM 
-       " . $this->table_name . " p 
+       " . self::TABLENAME . " 
        WHERE 
-        p.name LIKE '%" . $keywords . "%' OR p.description LIKE '%" . $keywords . "%' OR p.developer LIKE '%" . $keywords . "%'  OR p.publisher LIKE '%" . $keywords . "%' OR  p.ean LIKE '%" . $keywords . "%'  
+        p.name LIKE ':keywords' OR p.description LIKE '%" . $keywords . "%' OR p.developer LIKE '%" . $keywords . "%'  OR p.publisher LIKE '%" . $keywords . "%' OR  p.ean LIKE '%" . $keywords . "%'  
          ORDER BY p.id DESC
         ";
 
         // Prepare Query
         $stmt = $this->connection->prepare($query);
+
+        $stmt->bindValue("keywords", "%$keywords%");
 
         // Execute query
         $stmt->execute();
